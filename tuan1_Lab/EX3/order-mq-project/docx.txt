@@ -1,0 +1,120 @@
+Dựa trên hình ảnh yêu cầu mới của bạn về việc so sánh giữa việc Không dùng MQ (Message Queue) và Dùng MQ khi xử lý đặt hàng/gửi email, chúng ta sẽ tạo một dự án Node.js mô phỏng logic này.
+
+Dự án này sẽ giúp bạn minh chứng:
+
+Nếu không dùng MQ: API phải đợi gửi email xong mới phản hồi (chậm, dễ timeout).
+
+Nếu dùng MQ: API phản hồi ngay, việc gửi email được xử lý ngầm (asynchronous).
+
+1. Cấu trúc thư mục dự án
+  Plaintext
+  order-mq-project/
+  ├── src/
+  │   ├── services/
+  │   │   └── email.service.js
+  │   ├── controllers/
+  │   │   └── order.controller.js
+  │   ├── routes/
+  │   │   └── order.routes.js
+  │   └── server.js
+  ├── package.json
+  └── .env
+
+2. Cài đặt thư viện
+  Chúng ta sẽ dùng bull hoặc bee-queue (phổ biến trong Node.js) để làm MQ, kết nối với Redis.
+
+  Bash
+    npm init -y
+    npm install express dotenv bull redis
+    Lưu ý: Bạn cần cài đặt Redis server trên máy để chạy MQ.
+
+3. Mã nguồn chi tiết
+
+a. Giả lập dịch vụ Email (src/services/email.service.js)
+  Hàm này giả lập việc gửi email tốn 3-5 giây.
+
+  JavaScript
+  const sendEmail = async (orderId) => {
+    console.log(`[Email] Đang chuẩn bị gửi email cho đơn hàng: ${orderId}...`);
+    // Giả lập độ trễ 4 giây
+    await new Promise(resolve => setTimeout(resolve, 4000));
+    console.log(`[Email] Đã gửi email xác nhận cho đơn hàng: ${orderId} thành công!`);
+  };
+
+  module.exports = { sendEmail };
+
+b. Controller xử lý 2 phương án (src/controllers/order.controller.js)
+  JavaScript
+  const { sendEmail } = require("../services/email.service");
+  const Queue = require("bull");
+
+  // Khởi tạo Queue (MQ)
+  const emailQueue = new Queue("email-sending", "redis://127.0.0.1:6379");
+
+  // Xử lý MQ ngầm
+  emailQueue.process(async (job) => {
+    await sendEmail(job.data.orderId);
+  });
+
+  exports.createOrderNoMQ = async (req, res) => {
+    const orderId = Math.floor(Math.random() * 1000);
+    console.log(`\n[Hệ thống] Bắt đầu tạo đơn hàng ${orderId} (KHÔNG MQ)...`);
+    
+    // 1. Tạo đơn hàng ngay
+    // 2. Phải đợi gửi email xong mới trả kết quả
+    await sendEmail(orderId);
+
+    res.status(201).json({
+      message: "Tạo đơn hàng thành công (Đã đợi 4s để gửi email)",
+      orderId
+    });
+  };
+
+  exports.createOrderWithMQ = async (req, res) => {
+    const orderId = Math.floor(Math.random() * 1000);
+    console.log(`\n[Hệ thống] Bắt đầu tạo đơn hàng ${orderId} (CÓ MQ)...`);
+
+    // 1. Tạo đơn hàng ngay
+    // 2. Đẩy việc gửi email vào hàng đợi (Task Queue)
+    emailQueue.add({ orderId });
+
+    // 3. Trả kết quả ngay lập tức
+    res.status(201).json({
+      message: "Tạo đơn hàng thành công (Email đang được xử lý ngầm)",
+      orderId
+    });
+  };
+
+c. Tuyến đường API (src/routes/order.routes.js)
+  JavaScript
+  const controller = require("../controllers/order.controller");
+
+  module.exports = (app) => {
+    app.post("/api/order/no-mq", controller.createOrderNoMQ);
+    app.post("/api/order/with-mq", controller.createOrderWithMQ);
+  };
+
+4. Minh chứng bằng Postman (Chạy để thấy)
+  Trường hợp KHÔNG dùng MQ (/api/order/no-mq):
+
+    Bấm Send trong Postman.
+
+    Bạn sẽ thấy Postman quay khoảng 4 giây mới hiện kết quả.
+
+    Kết luận: User phải đợi, nếu email lỗi (timeout), đơn hàng có thể bị treo.
+
+  Trường hợp CÓ dùng MQ (/api/order/with-mq):
+
+    Bấm Send trong Postman.
+
+    Kết quả trả về ngay lập tức (vài mili giây).
+
+    Nhìn vào Terminal (Console), bạn sẽ thấy 4 giây sau thông báo "Đã gửi email" mới hiện ra.
+
+    Kết luận: Hệ thống phản hồi cực nhanh, trải nghiệm người dùng tốt.
+
+LƯU Ý:
+  Cách 2 : Nếu máy bạn có Docker, hãy chạy lệnh này để có ngay một server Redis:
+
+  PowerShell
+  docker run -d --name my-redis -p 6379:6379 redis
