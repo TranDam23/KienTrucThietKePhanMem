@@ -1,0 +1,46 @@
+1. Bài toán Quản lý đơn hàng (Mới tạo, Đang xử lý, Đã giao, Hủy)
+Pattern hoàn hảo nhất: State Pattern
+
+Các điểm cần lưu ý khi lập trình:
+
+a. Vấn đề chuyển trạng thái (Transition): Đơn hàng không chỉ có các hành vi khác nhau ở mỗi trạng thái,
+mà nó còn có thể chuyển từ trạng thái này sang trạng thái khác (Ví dụ: "Mới tạo" -> "Đang xử lý").
+State Pattern sẽ giúp Đơn hàng (Context) tự động thay đổi hành vi khi biến trạng thái bên trong nó thay đổi.
+
+b. Chặn các hành động sai logic: Bạn phải lưu ý việc chặn người dùng thực hiện sai quy trình.
+Ví dụ: Nếu đơn hàng đang ở State "Đã giao",
+hệ thống phải ném ra lỗi nếu người dùng gọi hàm huyDonHang().
+
+c. Tránh dùng if-else khổng lồ: Thay vì viết if (state == "Mới tạo") { ... } else if (...) trong lớp Đơn hàng,
+chúng ta sẽ tạo 4 class riêng biệt: NewState, ProcessingState, DeliveredState, CanceledState.
+
+
+KẾT LUẬN
+Nhờ State Pattern, class Order vô cùng sạch sẽ và ngắn gọn.
+Khi hệ thống mở rộng, ví dụ cần thêm trạng thái "Đang hoàn trả",
+bạn chỉ cần tạo thêm class ReturnedState implement OrderState mà hoàn toàn không phải đi sửa chữa
+lại mã nguồn cũ, tránh được rủi ro làm hỏng tính năng đang chạy.
+
+
+
+2. Bài toán Tính toán thuế (Thuế tiêu thụ, VAT, Thuế xa xỉ)
+Pattern hoàn hảo nhất: Strategy Pattern
+
+Các điểm cần lưu ý khi lập trình:
+
+Thuật toán có thể thay thế: Thuế thực chất là một "công thức toán học" (thuật toán). Một sản phẩm có thể bị áp các mức thuế khác nhau tùy thuộc vào loại hàng. Strategy Pattern cho phép bạn "rút" công thức tính thuế ra khỏi Sản phẩm và biến nó thành các class độc lập.
+
+Không có sự chuyển đổi qua lại: Khác với State, chiến lược tính thuế không tự động chuyển từ VAT sang Thuế xa xỉ. Người quản lý (hoặc hệ thống) sẽ chỉ định một cách chủ động lúc chạy code: "Sản phẩm A này, hãy dùng chiến lược tính VAT nhé".
+
+Dễ dàng thêm mới: Cần thiết kế sao cho ngày mai nếu nhà nước ra thêm "Thuế môi trường", bạn chỉ cần tạo thêm class EnvironmentalTaxStrategy mà không cần sửa code của class Product cũ.
+
+3. Bài toán Thanh toán (Thẻ tín dụng, PayPal + Phí xử lý, Mã giảm giá)
+Pattern hoàn hảo nhất: Decorator Pattern
+
+Các điểm cần lưu ý khi lập trình:
+
+Bọc (Wrap) các lớp lên nhau: Điểm mấu chốt ở đây là tính năng "cộng dồn". Bạn có một nền tảng cơ bản là ThanhToanThe (Credit Card). Sau đó bạn muốn "mặc thêm áo" cho nó: đắp thêm PhiXuLy, rồi lại đắp thêm MaGiamGia. Decorator cho phép bạn bọc các đối tượng vào nhau như búp bê Nga.
+
+Cùng chung một Interface: Cả phương thức thanh toán gốc (PayPal, CreditCard) và các lớp trang trí (Fee, Discount) bắt buộc phải implement chung một Interface (ví dụ: Payment). Điều này giúp hệ thống đối xử với "Thanh toán PayPal có mã giảm giá" y hệt như "Thanh toán PayPal thông thường".
+
+Thứ tự bọc rất quan trọng: Code cần lưu ý logic toán học. Áp dụng mã giảm giá trước rồi mới tính phí xử lý, hay tính phí xử lý rồi mới giảm giá sẽ cho ra kết quả số tiền khác nhau.
