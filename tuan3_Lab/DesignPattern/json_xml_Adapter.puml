@@ -1,0 +1,18 @@
+@startuml
+interface JsonService {
+    + requestJson(jsonData: String): void
+}
+
+class XmlSystem {
+    + provideXml(xmlData: String): void
+}
+
+class XmlToJsonAdapter {
+    - xmlSystem: XmlSystem
+    + XmlToJsonAdapter(xmlSystem: XmlSystem)
+    + requestJson(jsonData: String): void
+}
+
+JsonService <|-- XmlToJsonAdapter
+XmlToJsonAdapter --> XmlSystem : adapts
+@enduml

@@ -1,0 +1,80 @@
+@startuml
+' --- SINGLETON PATTERN ---
+class Library <<Singleton>> {
+    - {static} instance: Library
+    - books: List<Book>
+    - searchStrategy: SearchStrategy
+    - notificationService: NotificationService
+    - Library()
+    + {static} getInstance(): Library
+    + addBook(book: Book): void
+    + setSearchStrategy(strategy: SearchStrategy): void
+    + performSearch(keyword: String): List<Book>
+}
+
+' --- FACTORY METHOD PATTERN ---
+abstract class Book {
+    - title: String
+    - author: String
+    + getDetails(): String
+}
+
+class PhysicalBook extends Book
+class EBook extends Book
+
+abstract class BookFactory {
+    + createBook(title: String, author: String): Book
+}
+
+class PhysicalBookFactory extends BookFactory {
+    + createBook(title: String, author: String): Book
+}
+
+class EBookFactory extends BookFactory {
+    + createBook(title: String, author: String): Book
+}
+
+' --- STRATEGY PATTERN ---
+interface SearchStrategy {
+    + search(keyword: String, books: List<Book>): List<Book>
+}
+
+class SearchByName implements SearchStrategy
+class SearchByAuthor implements SearchStrategy
+
+' --- OBSERVER PATTERN ---
+class NotificationService {
+    - subscribers: List<Subscriber>
+    + subscribe(s: Subscriber): void
+    + notifySubscribers(message: String): void
+}
+
+interface Subscriber {
+    + update(message: String): void
+}
+
+class Librarian implements Subscriber
+
+' --- DECORATOR PATTERN ---
+interface Borrowable {
+    + borrowBook(): void
+}
+
+class ConcreteBorrowable implements Borrowable
+
+abstract class BorrowingDecorator implements Borrowable {
+    # borrowable: Borrowable
+    + BorrowingDecorator(b: Borrowable)
+}
+
+class RenewableDecorator extends BorrowingDecorator {
+    + renew(): void
+}
+
+' --- RELATIONSHIPS ---
+Library --> NotificationService
+Library --> SearchStrategy
+Library "1" *-- "many" Book
+BookFactory ..> Book : creates
+NotificationService "1" o-- "many" Subscriber
+@enduml

@@ -1,0 +1,29 @@
+@startuml
+interface Subject {
+    + attach(observer: Observer): void
+    + detach(observer: Observer): void
+    + notifyObservers(): void
+}
+
+class Stock {
+    - observers: List<Observer>
+    - symbol: String
+    - price: float
+    + setPrice(price: float): void
+    + getPrice(): float
+}
+
+interface Observer {
+    + update(message: String): void
+}
+
+class Investor {
+    - name: String
+    + Investor(name: String)
+    + update(message: String): void
+}
+
+Subject <|-- Stock
+Observer <|-- Investor
+Stock "1" o-- "many" Observer : notifies
+@enduml

@@ -1,0 +1,24 @@
+@startuml
+interface FileSystemComponent {
+    + showDetails(): void
+}
+
+class File {
+    - name: String
+    + File(name: String)
+    + showDetails(): void
+}
+
+class Folder {
+    - name: String
+    - components: List<FileSystemComponent>
+    + Folder(name: String)
+    + add(component: FileSystemComponent): void
+    + remove(component: FileSystemComponent): void
+    + showDetails(): void
+}
+
+FileSystemComponent <|-- File
+FileSystemComponent <|-- Folder
+Folder "1" *-- "many" FileSystemComponent : contains
+@enduml
