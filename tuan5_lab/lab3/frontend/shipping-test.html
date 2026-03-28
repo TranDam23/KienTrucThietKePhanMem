@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h1>Shipping Test</h1>
+<button onclick="createShipping()">Create Shipping</button>
+
+<script>
+async function createShipping() {
+    const res = await fetch('http://localhost:3003/shipping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: 1, address: "123 Main St" })
+    });
+    const data = await res.json();
+    alert(JSON.stringify(data));
+}
+</script>
+</body>
+</html>
