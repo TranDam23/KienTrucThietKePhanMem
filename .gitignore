@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+
+# env
+.env
+
+# logs
+logs
+*.log
+npm-debug.log*
+
+# build
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# vscode
+.vscode/
+
+# package lock optional
+package-lock.json
